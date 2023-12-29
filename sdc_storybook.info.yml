@@ -1,0 +1,4 @@
+name: 'Single Directory Components: Storybook'
+description: Storybook integration for Single Directory Components in Drupal
+type: module
+core_version_requirement: ^9 || ^10

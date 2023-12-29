@@ -1,0 +1,18 @@
+services:
+  logger.channel.sdc_storybook:
+    parent: logger.channel_base
+    arguments: ['sdc_storybook']
+
+  Drupal\sdc_storybook\Service\StoryCollector: {}
+  Drupal\sdc_storybook\Service\StoryRenderer:
+    arguments:
+      - '@logger.channel.sdc_storybook'
+    calls:
+      - ['setTwigEnvironment', ['@twig']]
+
+  Drupal\sdc_storybook\Twig\TwigExtension:
+    arguments:
+      - '@Drupal\sdc_storybook\Service\StoryRenderer'
+      - '@Drupal\sdc_storybook\Service\StoryCollector'
+    tags:
+      - { name: twig.extension }

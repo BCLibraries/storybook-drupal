@@ -1,0 +1,24 @@
+{% set lorem = 'Hey!' %}
+{% stories 'Button' with { title: 'Button' } %}
+
+  {% story 'Default' with {
+    parameters: { server: { params: { foo: 'Yay!' } } },
+    args: { bar: 'Yes' }
+  } %}
+    {# This is what will render inside of the story #}
+    <div class="decorator">
+      <h2>{{ foo }} / {{ bar }}</h2>
+      <p>{{ lorem }}</p>
+    </div>
+  {% endstory %}
+
+  {% story 'Sith' with {
+    server: { id: 'button' },
+    parameters: { foo: 'Nay!' },
+    args: { bar: 'No' }
+  } %}
+    <h2>{{ foo }} / {{ bar }}</h2>
+    <p>{{ lorem }}</p>
+  {% endstory %}
+
+{% endstories %}
