@@ -35,8 +35,12 @@ final class ServerController extends ControllerBase {
       throw new StoryRenderException('Impossible to locate a story to render without the template path or the story name.');
     }
     return [
-      '#type' => 'inline_template',
-      '#template' => sprintf("{{ include('%s', { _story: '%s' }, with_context = false) }}", $template_path, $story_name),
+      '#type' => 'container',
+      '#attributes' => ['id' => '___storybook_wrapper'],
+      'template' => [
+        '#type' => 'inline_template',
+        '#template' => sprintf("{{ include('%s', { _story: '%s' }, with_context = false) }}", $template_path, $story_name),
+      ],
     ];
   }
 

@@ -16,3 +16,7 @@ services:
       - '@Drupal\sdc_storybook\Service\StoryCollector'
     tags:
       - { name: twig.extension }
+
+  Drupal\sdc_storybook\EventSubscriber\AlterBodySubscriber:
+    tags:
+      - { name: event_subscriber }

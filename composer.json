@@ -1,0 +1,16 @@
+{
+    "name": "drupal/sdc_storybook",
+    "type": "drupal-module",
+    "require": {
+        "ext-dom": "*",
+        "symfony/dom-crawler": ">=6"
+    },
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Mateu Aguiló Bosch (e0ipso)",
+            "homepage": "https://www.drupal.org/u/e0ipso",
+            "role": "Maintainer"
+        }
+    ]
+}
