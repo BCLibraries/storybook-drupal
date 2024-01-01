@@ -1,10 +1,11 @@
 <?php
 
-namespace Drupal\sdc_storybook\Controller;
+namespace Drupal\twig_storybook\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\sdc_storybook\Exception\StoryRenderException;
-use Drupal\sdc_storybook\Service\StoryRenderer;
+use Drupal\Core\Url;
+use Drupal\twig_storybook\Exception\StoryRenderException;
+use Drupal\twig_storybook\Service\StoryRenderer;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
@@ -14,7 +15,12 @@ final class ServerController extends ControllerBase {
 
   public function generateStories() {
     $renderer = \Drupal::service(StoryRenderer::class);
-    $data = $renderer->generateStoriesJsonFile('@sdc_storybook/test_syntax.stories.twig');
+    $data = $renderer->generateStoriesJsonFile(
+      '@twig_storybook/test_syntax.stories.twig',
+      Url::fromUri('internal:/storybook/story', ['absolute' => TRUE])
+        ->toString(TRUE)
+        ->getGeneratedUrl()
+    );
     return new JsonResponse($data);
   }
 
@@ -22,8 +28,9 @@ final class ServerController extends ControllerBase {
     try {
       $decoded = json_decode(
         base64_decode($hash),
-        associative: TRUE,
-        flags: JSON_THROW_ON_ERROR,
+        TRUE,
+        512,
+        JSON_THROW_ON_ERROR,
       );
     }
     catch (\JsonException $e) {
