@@ -1,14 +1,14 @@
-twig_storybook.generate_story:
+storybook.generate_story:
   path: /storybook/stories/generate
   defaults:
-    _controller: '\Drupal\twig_storybook\Controller\ServerController::generateStories'
+    _controller: '\Drupal\storybook\Controller\ServerController::generateStories'
     _title: "Generate stories"
   requirements:
     _permission: "generate storybook stories"
-twig_storybook.render_story:
+storybook.render_story:
   path: /storybook/story/render/{hash}
   defaults:
-    _controller: '\Drupal\twig_storybook\Controller\ServerController::renderStory'
+    _controller: '\Drupal\storybook\Controller\ServerController::renderStory'
     _title: "Render a Storybook story"
   requirements:
     _permission: "render storybook stories"

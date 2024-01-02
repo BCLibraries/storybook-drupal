@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\twig_storybook\EventSubscriber;
+namespace Drupal\storybook\EventSubscriber;
 
-use Drupal\twig_storybook\Util;
+use Drupal\storybook\Util;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;

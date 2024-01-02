@@ -1,13 +1,13 @@
 services:
-  logger.channel.twig_storybook:
+  logger.channel.storybook:
     parent: logger.channel_base
-    arguments: ['twig_storybook']
+    arguments: ['storybook']
 
   TwigStorybook\Service\StoryCollector: {}
   TwigStorybook\Service\StoryRenderer:
     arguments:
       - '@TwigStorybook\Service\StoryCollector'
-      - '@logger.channel.twig_storybook'
+      - '@logger.channel.storybook'
       - '%app.root%'
     calls:
       - ['setTwigEnvironment', ['@twig']]
@@ -20,6 +20,6 @@ services:
     tags:
       - { name: twig.extension }
 
-  Drupal\twig_storybook\EventSubscriber\AlterBodySubscriber:
+  Drupal\storybook\EventSubscriber\AlterBodySubscriber:
     tags:
       - { name: event_subscriber }

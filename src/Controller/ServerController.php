@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\twig_storybook\Controller;
+namespace Drupal\storybook\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
@@ -16,7 +16,7 @@ final class ServerController extends ControllerBase {
   public function generateStories() {
     $renderer = \Drupal::service(StoryRenderer::class);
     $data = $renderer->generateStoriesJsonFile(
-      '@twig_storybook/test_syntax.stories.twig',
+      '@storybook/test_syntax.stories.twig',
       Url::fromUri('internal:/storybook/story/render', ['absolute' => TRUE])
         ->toString(TRUE)
         ->getGeneratedUrl()

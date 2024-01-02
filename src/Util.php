@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\twig_storybook;
+namespace Drupal\storybook;
 
 use Drupal\Core\Routing\RouteObjectInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +21,7 @@ class Util {
    */
   public static function isRenderController(Request $request): bool {
     $route_name = $request->attributes->get(RouteObjectInterface::ROUTE_NAME);
-    return $route_name === 'twig_storybook.render_story';
+    return $route_name === 'storybook.render_story';
   }
 
 }
