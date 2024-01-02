@@ -4,9 +4,9 @@ namespace Drupal\twig_storybook\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Url;
-use Drupal\twig_storybook\Exception\StoryRenderException;
-use Drupal\twig_storybook\Service\StoryRenderer;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use TwigStorybook\Exception\StoryRenderException;
+use TwigStorybook\Service\StoryRenderer;
 
 /**
  * An endpoint for the Storybook integration.
@@ -17,7 +17,7 @@ final class ServerController extends ControllerBase {
     $renderer = \Drupal::service(StoryRenderer::class);
     $data = $renderer->generateStoriesJsonFile(
       '@twig_storybook/test_syntax.stories.twig',
-      Url::fromUri('internal:/storybook/story', ['absolute' => TRUE])
+      Url::fromUri('internal:/storybook/story/render', ['absolute' => TRUE])
         ->toString(TRUE)
         ->getGeneratedUrl()
     );

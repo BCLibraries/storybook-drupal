@@ -14,7 +14,7 @@
 
   {% story 'Sith' with {
     server: { id: 'button' },
-    parameters: { foo: 'Nay!' },
+    parameters: { server: { params: { foo: 'Nay!' } } },
     args: { bar: 'No' }
   } %}
     <h2>{{ foo }} / {{ bar }}</h2>
