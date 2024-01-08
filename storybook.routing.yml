@@ -5,10 +5,14 @@ storybook.generate_story:
     _title: "Generate stories"
   requirements:
     _permission: "generate storybook stories"
+  options:
+    _no_big_pipe: TRUE
 storybook.render_story:
-  path: /storybook/story/render/{hash}
+  path: /storybook/stories/render/{hash}
   defaults:
     _controller: '\Drupal\storybook\Controller\ServerController::renderStory'
     _title: "Render a Storybook story"
   requirements:
     _permission: "render storybook stories"
+  options:
+    _no_big_pipe: TRUE

@@ -9,27 +9,36 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-class AlterBodySubscriber implements EventSubscriberInterface {
+final class AlterBodySubscriber implements EventSubscriberInterface {
 
   /**
    * Remove the X-Frame-Options header from the response for our route.
    *
    * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   The event to process.
+   *
+   * @throws \DOMException
    */
-  public function alter(ResponseEvent $event) {
+  public function alter(ResponseEvent $event): void {
     if (!Util::isRenderController($event->getRequest())) {
       return;
     }
     $response = $event->getResponse();
+    if ($response->isClientError() || $response->isServerError()) {
+      return;
+    }
+    $response->headers->remove('X-Frame-Options');
     $html = $response->getContent();
     $dom = new \DOMDocument();
-    $dom->loadHTML($html);
+    $success = @$dom->loadHTML($html);
+    if (!$success) {
+      return;
+    }
+    $wrapper_contents = $dom->getElementById('___storybook_wrapper');
     $crawler = new Crawler($dom);
-    $wrapper_contents = $crawler->filter('#___storybook_wrapper *');
     $body = $dom->getElementsByTagName('body')->item(0);
-    if (!$body || $wrapper_contents->count() === 0) {
-      throw new HttpException(500, 'Unable to process a response without a body or a rendered wrapper.');
+    if (!$body) {
+      throw new HttpException(500, 'Unable to process a response without a body.');
     }
     $body_scripts = $crawler->filter('body script');
 
@@ -40,9 +49,7 @@ class AlterBodySubscriber implements EventSubscriberInterface {
       $new_body->setAttribute($attr_name, $attr_value->value);
     }
     // Add into the new body, everything that we found inside the wrapper.
-    foreach ($wrapper_contents as $node) {
-      $new_body->appendChild($node);
-    }
+    $new_body->appendChild($wrapper_contents);
     // We also need any script that is found in the body, since there is no way
     // to ensure the script isn't necessary for our rendered template.
     foreach ($body_scripts as $body_script) {
