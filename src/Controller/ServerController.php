@@ -95,7 +95,7 @@ class ServerController extends ControllerBase {
 
   public function generateStories() {
     $data = $this->storyRenderer->generateStoriesJsonFile(
-      'modules/contrib/sdc_examples/components/my-banner/my-banner.stories.twig',
+      'modules/contrib/sdc_examples/components/my-card/my-card.stories.twig',
       Url::fromUri('internal:/storybook/stories/render', ['absolute' => TRUE])
         ->toString(TRUE)
         ->getGeneratedUrl()
@@ -116,8 +116,8 @@ class ServerController extends ControllerBase {
       throw new StoryRenderException('Unable to decode the story ID. Avoid tampering with the generated URL.', previous: $e);
     }
     $template_path = $decoded['path'] ?? '';
-    $story_name = $decoded['name'] ?? '';
-    if (empty($template_path) || empty($story_name)) {
+    $story_id = $decoded['id'] ?? '';
+    if (empty($template_path) || empty($story_id)) {
       throw new StoryRenderException('Impossible to locate a story to render without the template path or the story name.');
     }
     if ($this->developmentMode) {
@@ -138,7 +138,10 @@ class ServerController extends ControllerBase {
       '#attributes' => ['id' => '___storybook_wrapper'],
       'template' => [
         '#type' => 'inline_template',
-        '#template' => sprintf("{{ include('%s', { _story: '%s' }, with_context = false) }}", $template_path, $story_name),
+        '#template' => sprintf("{{ include('%s') }}", $template_path),
+        '#context' => [
+          '_story' => $story_id,
+        ]
       ],
     ];
   }
