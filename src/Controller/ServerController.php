@@ -2,19 +2,17 @@
 
 namespace Drupal\storybook\Controller;
 
-use Drupal\Core\Url;
-use Drupal\sdc\Plugin\Component;
-use Drupal\sdc\Component\ComponentMetadata;
-use Drupal\Core\Template\Attribute;
-use Drupal\Core\State\StateInterface;
 use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
+use Drupal\Core\State\StateInterface;
+use Drupal\Core\Url;
+use Drupal\storybook\RegexRecursiveFilterIterator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use TwigStorybook\Exception\StoryRenderException;
 use TwigStorybook\Service\StoryRenderer;
 
@@ -94,20 +92,11 @@ class ServerController extends ControllerBase {
     return new static($cache_kill_switch, $state, $time, $story_renderer, $development_mode);
   }
 
-  public function generateStories() {
-    $data = $this->storyRenderer->generateStoriesJsonFile(
-      'modules/contrib/sdc_examples/components/my-card/my-card.stories.twig',
-      Url::fromUri('internal:/storybook/stories/render', ['absolute' => TRUE])
-        ->toString(TRUE)
-        ->getGeneratedUrl()
-    );
-    return new JsonResponse($data);
-  }
 
   public function renderStory(string $hash, Request $request): array {
     try {
       $decoded = json_decode(
-        base64_decode($hash),
+        base64_decode(urldecode($hash)),
         TRUE,
         512,
         JSON_THROW_ON_ERROR,
@@ -143,7 +132,7 @@ class ServerController extends ControllerBase {
         '#context' => [
           ...$arguments,
           '_story' => $story_id,
-        ]
+        ],
       ],
     ];
   }
@@ -162,7 +151,9 @@ class ServerController extends ControllerBase {
     $stories = $this->storyRenderer->generateStoriesJsonFile($template_path, '')['stories'] ?? [];
     $filtered = array_filter(
       $stories,
-      static fn (array $st) => $st['parameters']['server']['id'] === $hash,
+      static fn(array $st) =>
+        $st['parameters']['server']['id'] === $hash ||
+        $st['parameters']['server']['id'] === urlencode($hash),
     );
     $story = reset($filtered);
     if (empty($story)) {
