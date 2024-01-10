@@ -5,14 +5,11 @@ namespace Drupal\storybook\Controller;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\State\StateInterface;
-use Drupal\Core\Url;
-use Drupal\storybook\RegexRecursiveFilterIterator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use TwigStorybook\Exception\StoryRenderException;
 use TwigStorybook\Service\StoryRenderer;
 
@@ -95,75 +92,18 @@ class ServerController extends ControllerBase {
 
   public function renderStory(string $hash, Request $request): array {
     try {
-      $decoded = json_decode(
-        base64_decode(urldecode($hash)),
-        TRUE,
-        512,
-        JSON_THROW_ON_ERROR,
-      );
+      $markup = $this->storyRenderer->renderStory($hash, $request);
     }
-    catch (\JsonException $e) {
-      throw new StoryRenderException('Unable to decode the story ID. Avoid tampering with the generated URL.', previous: $e);
+    catch (StoryRenderException $e) {
+      throw new HttpException(500, $e->getMessage(), previous: $e);
     }
-    $template_path = $decoded['path'] ?? '';
-    $story_id = $decoded['id'] ?? '';
-    if (empty($template_path) || empty($story_id)) {
-      throw new StoryRenderException('Impossible to locate a story to render without the template path or the story name.');
-    }
-    if ($this->developmentMode) {
-      $this->cacheKillSwitch->trigger();
-      // Replace with the 'asset.query_string' service in drupal:^10.2.0.
-      // @see https://www.drupal.org/node/3358337
-      $query_string = base_convert(strval($this->time->getRequestTime()), 10, 36);
-      $this->state->setMultiple([
-        'system.css_js_query_string' => $query_string,
-        'asset.css_js_query_string' => $query_string,
-      ]);
-    }
-    $arguments = $this->getArguments($request, $template_path, $hash);
     return [
       '#attached' => ['library' => ['storybook/attach_behaviors']],
       '#type' => 'container',
       '#cache' => $this->developmentMode ? ['max-age' => 0] : [],
       '#attributes' => ['id' => '___storybook_wrapper'],
-      'template' => [
-        '#type' => 'inline_template',
-        '#template' => sprintf("{{ include('%s') }}", $template_path),
-        '#context' => [
-          ...$arguments,
-          '_story' => $story_id,
-        ],
-      ],
+      'template' => ['#markup' => Markup::create($markup)],
     ];
-  }
-
-  /**
-   * Gets the arguments.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The inbound request.
-   *
-   * @return array
-   *   The array of arguments.
-   */
-  private function getArguments(Request $request, string $template_path, string $hash): array {
-    // Generate the story based on the path and ID. We need to inspect the args.
-    $stories = $this->storyRenderer->generateStoriesJsonFile($template_path, '')['stories'] ?? [];
-    $filtered = array_filter(
-      $stories,
-      static fn(array $st) =>
-        $st['parameters']['server']['id'] === $hash ||
-        $st['parameters']['server']['id'] === urlencode($hash),
-    );
-    $story = reset($filtered);
-    if (empty($story)) {
-      throw new NotFoundHttpException(sprintf('Impossible to find the story with hash "%s" in "%s".', $hash, $template_path));
-    }
-    $arg_names = array_keys($story['args'] ?? []);
-    return array_intersect_key(
-      $request->query->getIterator()->getArrayCopy(),
-      array_flip($arg_names),
-    );
   }
 
 }
