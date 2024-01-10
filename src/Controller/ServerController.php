@@ -14,6 +14,7 @@ use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use TwigStorybook\Exception\StoryRenderException;
 use TwigStorybook\Service\StoryRenderer;
 
@@ -130,7 +131,7 @@ class ServerController extends ControllerBase {
         'asset.css_js_query_string' => $query_string,
       ]);
     }
-    $arguments = $this->getArguments($request);
+    $arguments = $this->getArguments($request, $template_path, $hash);
     return [
       '#attached' => ['library' => ['storybook/attach_behaviors']],
       '#type' => 'container',
@@ -140,6 +141,7 @@ class ServerController extends ControllerBase {
         '#type' => 'inline_template',
         '#template' => sprintf("{{ include('%s') }}", $template_path),
         '#context' => [
+          ...$arguments,
           '_story' => $story_id,
         ]
       ],
@@ -149,25 +151,28 @@ class ServerController extends ControllerBase {
   /**
    * Gets the arguments.
    *
-   * Retrieve the arguments from the query string if the request is a GET. If
-   * the request is a POST, retrieve the arguments from the request body.
-   *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The inbound request.
    *
    * @return array
    *   The array of arguments.
    */
-  private function getArguments(Request $request): array {
-    $json = '[]';
-    if ($request->getMethod() === 'GET') {
-      $json = base64_decode($request->query->get('_params', ''), TRUE);
+  private function getArguments(Request $request, string $template_path, string $hash): array {
+    // Generate the story based on the path and ID. We need to inspect the args.
+    $stories = $this->storyRenderer->generateStoriesJsonFile($template_path, '')['stories'] ?? [];
+    $filtered = array_filter(
+      $stories,
+      static fn (array $st) => $st['parameters']['server']['id'] === $hash,
+    );
+    $story = reset($filtered);
+    if (empty($story)) {
+      throw new NotFoundHttpException(sprintf('Impossible to find the story with hash "%s" in "%s".', $hash, $template_path));
     }
-    if ($request->getMethod() === 'POST') {
-      $json = $request->getContent();
-    }
-    $args = Json::decode($json ?: '[]');
-    return is_array($args) ? $args : [];
+    $arg_names = array_keys($story['args'] ?? []);
+    return array_intersect_key(
+      $request->query->getIterator()->getArrayCopy(),
+      array_flip($arg_names),
+    );
   }
 
 }
