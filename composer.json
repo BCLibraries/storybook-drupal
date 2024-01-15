@@ -3,7 +3,7 @@
     "type": "drupal-module",
     "require": {
         "ext-dom": "*",
-        "symfony/dom-crawler": ">=6",
+        "symfony/dom-crawler": "^6 || ^4",
         "e0ipso/twig-storybook": "^1"
     },
     "license": "GPL-2.0-or-later",
