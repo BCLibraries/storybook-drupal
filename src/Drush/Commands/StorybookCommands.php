@@ -64,6 +64,12 @@ final class StorybookCommands extends DrushCommands {
   }
 
   private function scanDirectory(string $directory): array {
+
+    // Skip if directory doesn't exist.
+    if (!is_dir($directory)) {
+      return [];
+    }
+
     // Use FilesystemIterator to not iterate over the . and .. directories.
     $flags = \FilesystemIterator::KEY_AS_PATHNAME
       | \FilesystemIterator::CURRENT_AS_FILEINFO
