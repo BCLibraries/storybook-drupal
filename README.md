@@ -79,50 +79,28 @@ services:
 
 ⚠ Make sure to **grant permission** to _Render Storybook stories_ for anonymous users. Keep this permission disabled in production.
 
-#### Prepare ddev for running the Storybook application
-If you are using ddev for you local environment you will need to expose some ports to connect to Storybook. You can do so by adapting the following snippet in your `.ddev/config.yaml`:
+#### Use ddev-storybook addon
 
-<details><summary><strong>See ddev configuration</strong></summary>
+["ddev-storybook"](https://github.com/tyler36/ddev-storybook) is a community addon that provides extra commands to improve usability.
 
-```yaml
-###############################################################################
-# Customizations
-###############################################################################
-nodejs_version: "18"
-webimage_extra_packages:
-  - pkg-config
-  - libpixman-1-dev
-  - libcairo2-dev
-  - libpango1.0-dev
-  - make
-web_extra_exposed_ports:
-  - name: storybook
-    container_port: 6006
-    http_port: 6007
-    https_port: 6006
-web_extra_daemons:
-  - name: node.js
-    command: "tail -F package.json > /dev/null"
-    directory: /var/www/html
-hooks:
-  post-start:
-    - exec: echo '================================================================================='
-    - exec: echo '                                  NOTICE'
-    - exec: echo '================================================================================='
-    - exec: echo 'The node.js container is ready. You can start storybook by typing:'
-    - exec: echo 'ddev yarn storybook'
-    - exec: echo
-    - exec: echo 'By default it will be available at https://change-me.ddev.site:6006'
-    - exec: echo "Use ddev describe to confirm if this doesn't work."
-    - exec: echo 'Check the status of startup by running "ddev logs --follow --time"'
-    - exec: echo '================================================================================='
+1. Install the addon.
 
-###############################################################################
-# End of customizations
-###############################################################################
+```shell
+ddev get tyler36/storybook
+ddev restart
 ```
 
-</details>
+1. Start the storybook server.
+
+```shell
+ddev storybook -s
+```
+
+1. Launch the storybook UI.
+
+```shell
+ddev storybook
+```
 
 <details><summary><strong>Manually support missing assets (fonts, etc)</strong></summary>
 
