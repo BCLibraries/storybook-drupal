@@ -79,6 +79,37 @@ services:
 
 ⚠ Make sure to **grant permission** to _Render Storybook stories_ for anonymous users. Keep this permission disabled in production.
 
+
+### Storybook setup
+
+Install Storybook as usual:
+
+```bash
+# Make use of modern versions of yarn.
+yarn set version berry
+# Avoid pnp.
+echo 'nodeLinker: node-modules' >> .yarnrc.yml
+# Install and configure stock Storybook.
+yarn dlx sb init --builder webpack5 --type server
+```
+
+Then update `.storybook/main.js` to scan for stories where your application stores them.
+
+### Compiling Twig stories into JSON
+
+The Storybook application will does not understand stories in Twig format. It will fail to render them. You need to
+compile them into a `*.stories.json`. To do so you can run:
+
+```bash
+drush storybook:generate-all-stories
+```
+
+If you want to monitor story changes to compile Twig stories into JSON, execute it with `watch`. Like so:
+
+```bash
+watch --color drush storybook:generate-all-stories
+```
+
 #### Use ddev-storybook addon
 
 ["ddev-storybook"](https://github.com/tyler36/ddev-storybook) is a community addon that provides extra commands to improve usability.
@@ -122,33 +153,3 @@ As a workaround, you can take control of the `nginx-site.conf` file and tweak it
 3. Run `ddev restart`
 
 </details>
-
-### Storybook setup
-
-Install Storybook as usual:
-
-```bash
-# Make use of modern versions of yarn.
-yarn set version berry
-# Avoid pnp.
-echo 'nodeLinker: node-modules' >> .yarnrc.yml
-# Install and configure stock Storybook.
-yarn dlx sb init --builder webpack5 --type server
-```
-
-Then update `.storybook/main.js` to scan for stories where your application stores them.
-
-### Compiling Twig stories into JSON
-
-The Storybook application will does not understand stories in Twig format. It will fail to render them. You need to
-compile them into a `*.stories.json`. To do so you can run:
-
-```bash
-drush storybook:generate-all-stories
-```
-
-If you want to monitor story changes to compile Twig stories into JSON, execute it with `watch`. Like so:
-
-```bash
-watch --color drush storybook:generate-all-stories
-```
