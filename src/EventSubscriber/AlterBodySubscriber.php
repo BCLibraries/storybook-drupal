@@ -29,12 +29,18 @@ final class AlterBodySubscriber implements EventSubscriberInterface {
     }
     $response->headers->remove('X-Frame-Options');
     $html = $response->getContent();
+    if (empty($html)) {
+      return;
+    }
     $dom = new \DOMDocument();
     $success = @$dom->loadHTML($html);
     if (!$success) {
       return;
     }
     $wrapper_contents = $dom->getElementById('___storybook_wrapper');
+    if (is_null($wrapper_contents)) {
+      return;
+    }
     $crawler = new Crawler($dom);
     $body = $dom->getElementsByTagName('body')->item(0);
     if (!$body) {
