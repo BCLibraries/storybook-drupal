@@ -79,6 +79,71 @@ services:
 
 ⚠ Make sure to **grant permission** to _Render Storybook stories_ for anonymous users. Keep this permission disabled in production.
 
+#### Prepare ddev for running the Storybook application
+If you are using ddev for you local environment you will need to expose some ports to connect to Storybook. You can do so by adapting the following snippet in your `.ddev/config.yaml`:
+
+<details><summary><strong>See ddev configuration</strong></summary>
+
+```yaml
+###############################################################################
+# Customizations
+###############################################################################
+nodejs_version: "18"
+webimage_extra_packages:
+  - pkg-config
+  - libpixman-1-dev
+  - libcairo2-dev
+  - libpango1.0-dev
+  - make
+web_extra_exposed_ports:
+  - name: storybook
+    container_port: 6006
+    http_port: 6007
+    https_port: 6006
+web_extra_daemons:
+  - name: node.js
+    command: "tail -F package.json > /dev/null"
+    directory: /var/www/html
+hooks:
+  post-start:
+    - exec: echo '================================================================================='
+    - exec: echo '                                  NOTICE'
+    - exec: echo '================================================================================='
+    - exec: echo 'The node.js container is ready. You can start storybook by typing:'
+    - exec: echo 'ddev yarn storybook'
+    - exec: echo
+    - exec: echo 'By default it will be available at https://change-me.ddev.site:6006'
+    - exec: echo "Use ddev describe to confirm if this doesn't work."
+    - exec: echo 'Check the status of startup by running "ddev logs --follow --time"'
+    - exec: echo '================================================================================='
+
+###############################################################################
+# End of customizations
+###############################################################################
+```
+
+</details>
+
+<details><summary><strong>Manually support missing assets (fonts, etc)</strong></summary>
+
+Some users have reported that even with CORS enabled on Drupal, font assets (i.e. `woff/woff2` fonts) won't be served due to CORS.
+
+As a workaround, you can take control of the `nginx-site.conf` file and tweak it. Just do the following:
+
+1. Remove the `#ddev-generated` line (usually, the third line) on `.ddev/nginx_full/nginx-site.conf`. This will allow you to override DDEV defaults, see more info [here](https://ddev.readthedocs.io/en/latest/users/extend/customization-extendibility/#custom-nginx-configuration).
+2. Locate this line and manually add the CORS header:
+```yml
+  # Media: images, icons, video, audio, HTC
+  location ~* \.(png|jpg|jpeg|gif|ico|svg|woff|woff2)$ { # <--- Add the missing extensions
+    add_header Access-Control-Allow-Origin *; # <--- Add the CORS header
+    try_files $uri @rewrite;
+    expires max;
+    log_not_found off;
+  }
+```
+3. Run `ddev restart`
+
+</details>
 
 ### Storybook setup
 
@@ -114,6 +179,8 @@ watch --color drush storybook:generate-all-stories
 
 ["ddev-storybook"](https://github.com/tyler36/ddev-storybook) is a community addon that provides extra commands to improve usability.
 
+With this addon, you do not need to alter `.ddev/config.yaml` as described above.
+
 1. Install the addon.
 
 ```shell
@@ -132,24 +199,3 @@ ddev storybook -s
 ```shell
 ddev storybook
 ```
-
-<details><summary><strong>Manually support missing assets (fonts, etc)</strong></summary>
-
-Some users have reported that even with CORS enabled on Drupal, font assets (i.e. `woff/woff2` fonts) won't be served due to CORS.
-
-As a workaround, you can take control of the `nginx-site.conf` file and tweak it. Just do the following:
-
-1. Remove the `#ddev-generated` line (usually, the third line) on `.ddev/nginx_full/nginx-site.conf`. This will allow you to override DDEV defaults, see more info [here](https://ddev.readthedocs.io/en/latest/users/extend/customization-extendibility/#custom-nginx-configuration).
-2. Locate this line and manually add the CORS header:
-```yml
-  # Media: images, icons, video, audio, HTC
-  location ~* \.(png|jpg|jpeg|gif|ico|svg|woff|woff2)$ { # <--- Add the missing extensions
-    add_header Access-Control-Allow-Origin *; # <--- Add the CORS header
-    try_files $uri @rewrite;
-    expires max;
-    log_not_found off;
-  }
-```
-3. Run `ddev restart`
-
-</details>
