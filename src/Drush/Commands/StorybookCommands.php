@@ -76,7 +76,7 @@ final class StorybookCommands extends DrushCommands {
       | \FilesystemIterator::SKIP_DOTS;
     $directory_iterator = new \RecursiveDirectoryIterator($directory, $flags);
     // Detect "my_component.component.yml".
-    $regex = '/^([a-z0-9_-])+.stories.twig$/i';
+    $regex = '/^([a-z0-9_-])+\.stories\.twig$/i';
     $filter = new RegexRecursiveFilterIterator($directory_iterator, $regex);
     $it = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::LEAVES_ONLY, $flags);
     $files = [];
