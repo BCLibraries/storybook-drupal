@@ -134,7 +134,7 @@ ddev storybook
 ```
 
 
-<details><summary><strong>Alternatively, you can also configure it manually</strong></summary>
+<details><summary><strong>Alternatively, you can manually update `.ddev/config.yaml` using the following snippet:</strong></summary>
 
 ```yaml
 ###############################################################################
@@ -196,3 +196,7 @@ As a workaround, you can take control of the `nginx-site.conf` file and tweak it
 3. Run `ddev restart`
 
 </details>
+
+#### Other dockerized environments
+
+Developers using other dockerized development environments, such as Lando, can adapt the manual `.ddev/config.yaml` snippet above.
