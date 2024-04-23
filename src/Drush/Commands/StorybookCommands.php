@@ -81,6 +81,10 @@ final class StorybookCommands extends DrushCommands {
     $it = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::LEAVES_ONLY, $flags);
     $files = [];
     foreach ($it as $file) {
+      // Skip if file is a symbolic link
+      if (is_link($file)) {
+        continue;
+      }
       $this->validateTemplatePath($file);
       $files[] = $file;
     }
