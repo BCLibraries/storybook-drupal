@@ -4,6 +4,6 @@ storybook.render_story:
     _controller: '\Drupal\storybook\Controller\ServerController::renderStory'
     _title: "Render a Storybook story"
   requirements:
-    _permission: "render storybook stories"
+    _custom_access: '\Drupal\storybook\Controller\ServerController::access'
   options:
     _no_big_pipe: TRUE

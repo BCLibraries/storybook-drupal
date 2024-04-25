@@ -3,9 +3,11 @@
 namespace Drupal\storybook\Controller;
 
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -104,6 +106,22 @@ class ServerController extends ControllerBase {
       '#attributes' => ['id' => '___storybook_wrapper'],
       'template' => ['#markup' => Markup::create($markup)],
     ];
+  }
+
+  /**
+   * Checks access for the storybook render route.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The currently logged in account.
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public function access(AccountInterface $account) {
+    if ($this->developmentMode) {
+      return AccessResult::allowed();
+    }
+
+    return AccessResult::allowedIfHasPermission($account, 'render storybook stories');
   }
 
 }
