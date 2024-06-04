@@ -60,9 +60,6 @@ The configuration you want looks like this:
 ```yaml
 parameters:
   # ...
-  twig.config:
-    debug: true
-    cache: false
   # Remember to disable development mode in production!
   storybook.development: true
   cors.config:
@@ -76,6 +73,14 @@ parameters:
 services:
   # ...
 ```
+
+Disable render cache and twig cache:
+
+<code>
+drush state:set twig_debug 1
+drush state:set twig_cache_disable 1
+drush state:set disable_rendered_output_cache_bins 1
+</code>
 
 ⚠ Make sure to **grant permission** to _Render Storybook stories_ for anonymous users. Keep this permission disabled in production.
 
