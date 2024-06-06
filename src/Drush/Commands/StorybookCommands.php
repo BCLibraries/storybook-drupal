@@ -83,6 +83,7 @@ final class StorybookCommands extends DrushCommands {
     $files = [];
     foreach ($it as $file) {
       
+      // Exclude node_modules directories.
       if (str_contains($file->getPathname(), 'node_modules')) {
         continue;
       }
