@@ -82,6 +82,11 @@ final class StorybookCommands extends DrushCommands {
     $it = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::LEAVES_ONLY, $flags);
     $files = [];
     foreach ($it as $file) {
+      
+      if (str_contains($file->getPathname(), 'node_modules')) {
+        continue;
+      }
+      
       $this->validateTemplatePath($file);
       $files[] = $file;
     }
