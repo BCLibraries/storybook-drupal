@@ -63,7 +63,7 @@ final class StorybookCommands extends DrushCommands {
     );
   }
 
-  private function scanDirectory(string $directory): array {
+  public function scanDirectory(string $directory): array {
 
     // Skip if directory doesn't exist.
     if (!is_dir($directory)) {
