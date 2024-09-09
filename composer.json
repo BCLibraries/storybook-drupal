@@ -1,5 +1,6 @@
 {
     "name": "drupal/storybook",
+    "description": "Storybook integration for Drupal",
     "type": "drupal-module",
     "require": {
         "ext-dom": "*",
