@@ -102,7 +102,7 @@ class ServerController extends ControllerBase {
     return [
       '#attached' => ['library' => ['storybook/attach_behaviors']],
       '#type' => 'container',
-      '#cache' => $this->developmentMode ? ['max-age' => 0] : [],
+      '#cache' => $this->developmentMode ? ['max-age' => 0] : ['contexts' => ['url.query_args']],
       '#attributes' => ['id' => '___storybook_wrapper'],
       'template' => ['#markup' => Markup::create($markup)],
     ];
