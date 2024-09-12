@@ -84,10 +84,62 @@ drush state:set disable_rendered_output_cache_bins 1
 
 ⚠ Make sure to **grant permission** to _Render Storybook stories_ for anonymous users. Keep this permission disabled in production.
 
-#### Prepare ddev for running the Storybook application
-If you are using ddev for you local environment you will need to expose some ports to connect to Storybook. You can do so by adapting the following snippet in your `.ddev/config.yaml`:
 
-<details><summary><strong>See ddev configuration</strong></summary>
+### Storybook setup
+
+Install Storybook as usual:
+
+```bash
+# Make use of modern versions of yarn.
+yarn set version berry
+# Avoid pnp.
+echo 'nodeLinker: node-modules' >> .yarnrc.yml
+# Install and configure stock Storybook.
+yarn dlx sb init --builder webpack5 --type server
+```
+
+Then update `.storybook/main.js` to scan for stories where your application stores them.
+
+### Compiling Twig stories into JSON
+
+The Storybook application will does not understand stories in Twig format. It will fail to render them. You need to
+compile them into a `*.stories.json`. To do so you can run:
+
+```bash
+drush storybook:generate-all-stories
+```
+
+If you want to monitor story changes to compile Twig stories into JSON, execute it with `watch`. Like so:
+
+```bash
+watch --color drush storybook:generate-all-stories
+```
+
+#### Use ddev-storybook addon
+
+["ddev-storybook"](https://github.com/tyler36/ddev-storybook) is a community addon that provides extra commands to improve usability.
+
+1. Install the addon.
+
+```shell
+ddev get tyler36/storybook
+ddev restart
+```
+
+1. Start the storybook server.
+
+```shell
+ddev storybook -s
+```
+
+1. Launch the storybook UI.
+
+```shell
+ddev storybook
+```
+
+
+<details><summary><strong>Alternatively, you can manually update `.ddev/config.yaml` using the following snippet:</strong></summary>
 
 ```yaml
 ###############################################################################
@@ -129,7 +181,7 @@ hooks:
 
 </details>
 
-<details><summary><strong>Manually support missing assets (fonts, etc)</strong></summary>
+<details><summary><strong>Support missing assets (fonts, etc)</strong></summary>
 
 Some users have reported that even with CORS enabled on Drupal, font assets (i.e. `woff/woff2` fonts) won't be served due to CORS.
 
@@ -150,32 +202,6 @@ As a workaround, you can take control of the `nginx-site.conf` file and tweak it
 
 </details>
 
-### Storybook setup
+#### Other dockerized environments
 
-Install Storybook as usual:
-
-```bash
-# Make use of modern versions of yarn.
-yarn set version berry
-# Avoid pnp.
-echo 'nodeLinker: node-modules' >> .yarnrc.yml
-# Install and configure stock Storybook.
-yarn dlx sb init --builder webpack5 --type server
-```
-
-Then update `.storybook/main.js` to scan for stories where your application stores them.
-
-### Compiling Twig stories into JSON
-
-The Storybook application will does not understand stories in Twig format. It will fail to render them. You need to
-compile them into a `*.stories.json`. To do so you can run:
-
-```bash
-drush storybook:generate-all-stories
-```
-
-If you want to monitor story changes to compile Twig stories into JSON, execute it with `watch`. Like so:
-
-```bash
-watch --color drush storybook:generate-all-stories
-```
+Developers using other dockerized development environments, such as Lando, can adapt the manual `.ddev/config.yaml` snippet above.
