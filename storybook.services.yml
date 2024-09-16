@@ -71,3 +71,8 @@ services:
       - '@Drupal\storybook\Asset\UnoptimizedAssetResolver.inner'
       - '@request_stack'
       - '%storybook.development%'
+  storybook.twig.storybook_twig_extension:
+    class: Drupal\storybook\Twig\StorybookTwigExtension
+    arguments: [ '@plugin.manager.sdc', '@twig', '@extension.list.theme', '@extension.list.module']
+    tags:
+      - { name: twig.extension }
