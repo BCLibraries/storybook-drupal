@@ -112,9 +112,9 @@ class StorybookTwigExtension extends AbstractExtension {
     $module_extension_exists = $this->moduleList->exists($extension_name);
 
     if ($theme_extension_exists) {
-      $extension_path = $this->themeList->getPath($extension_name);
+      return $this->themeList->getPath($extension_name);
     } elseif ($module_extension_exists) {
-      $extension_path = $this->moduleList->getPath($extension_name);
+      return $this->moduleList->getPath($extension_name);
     } else {
       return "Theme or module not found";
     }
@@ -138,7 +138,6 @@ class StorybookTwigExtension extends AbstractExtension {
     $iterator = new \RecursiveIteratorIterator(
       new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
     );
-
     foreach ($iterator as $file) {
       if ($file->getFilename() === $filename) {
         return $file->getPathname();
