@@ -7,6 +7,7 @@ use Drupal\Core\Theme\ComponentPluginManager;
 use Twig\Extension\AbstractExtension;
 use Twig\Environment;
 use Twig\TwigFunction;
+use Symfony\Component\Finder\Finder;
 
 /**
  * The twig extension so we can include an individual story from a collection of stories.
@@ -133,14 +134,21 @@ class StorybookTwigExtension extends AbstractExtension {
    */
   private function findFileInDirectory(string $directory, string $filename): ?string
   {
-    // look only in the components directory.
-    $directory .= '/components';
-    $iterator = new \RecursiveIteratorIterator(
-      new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
-    );
-    foreach ($iterator as $file) {
-      if ($file->getFilename() === $filename) {
-        return $file->getPathname();
+    $finder = new Finder();
+    $finder->files()
+      ->in($directory)
+      ->name($filename)
+      ->exclude('node_modules');   // Exclude the node_modules directory
+
+    foreach ($finder as $file) {
+      $fullPath = $file->getRealPath();
+
+      // Find the position of $directory within $fullPath
+      $position = strpos($fullPath, $directory);
+
+      if ($position !== false) {
+        // Extract the relative path starting from $directory
+        return substr($fullPath, $position);
       }
     }
 
