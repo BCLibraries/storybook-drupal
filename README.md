@@ -181,15 +181,15 @@ watch --color drush storybook:generate-all-stories
 ```
 
 #### Setting the server url for Stories
-In order for Storybook to fetch the rendered story from Drupal, it must know the url for the Storybook route. By default this url is added as a [story parameter](https://storybook.js.org/docs/writing-stories/parameters) during the compilation process and will be set based on the URI configured for drush. 
+In order for Storybook to fetch the rendered story from Drupal, it must know the url for the Storybook route. By default this url is added as a [story parameter](https://storybook.js.org/docs/writing-stories/parameters) during the compilation process and will be set based on the URI configured for drush.
 
-To override the domain, use Drush's `--uri` option. 
+To override the domain, use Drush's `--uri` option.
 
 ```bash
 drush storybook:generate-all-stories --uri=https://my-site.com
 ```
 
-If you'd prefer to set the server URL in Storybook configuration, you can omit the server url parameter from the compiled stories.json files with the `--omit-server-url` option. This is useful when deploying a static version of your Storybook application to different environments. 
+If you'd prefer to set the server URL in Storybook configuration, you can omit the server url parameter from the compiled stories.json files with the `--omit-server-url` option. This is useful when deploying a static version of your Storybook application to different environments.
 
 ```bash
 drush storybook:generate-all-stories --omit-server-url
@@ -368,3 +368,32 @@ server {
 This nginx configuration will be copied over to your Tugboat `sites-enabled` directory and loaded with every nginx reload. The configuration takes precedent over Tugboat's default nginx configuration for each `TUGBOAT_SERVICE_URL_HOST` which corresponds to the URL created by Tugboat for your pull requests.
 
 Note: You may need to add, remove, or update location directives depending on your site's particular use cases.
+
+## Troubleshooting
+
+### Case 1: Error rendering component with Storybook
+
+If the component doesn't render in Storybook and inspecting network request showing a request with an error response:
+
+```
+http://[DRUPAL-SITE]/storybook/stories/render/{hash}?...
+```
+
+This is because server url in JSON stories generated via `drush storybook:generate-all-stories` are `http`.
+Then when Storybook request to Drupal via `http`, it eventually get rejected.
+This is caused by either *ddev* certificate config issue, or by custom drush alias enforcing http.
+
+Solution:
+- Consider fixing ddev config as shown in https://stackoverflow.com/questions/65111024/ddev-project-starts-up-site...
+- Or, create a Drush site alias with uri using https
+- Run `ddev drush st | grep "Site URI"` to verify the current protocol is https
+
+### Case 2: Issue when migrating from CL Server into Storybook
+
+If all components don't render in Storybook and inspecting network requests in Storybook showing request to
+
+```
+http://[DRUPAL-SITE]/storybook/stories/render/_cl_server?_storyFileName=.%2Fdocroot%2Fmodules%2Fcustom%2[MY-MODULE]%2Fcomponents%2Fbutton%2Fbutton.stories.json&_drupalTheme=testTheme
+```
+
+Unlike with CL Server, the new Storybook module no longer requires `@lullabot/storybook-drupal-addon`. This add-on should be removed from the `.storybook/main.js`.
