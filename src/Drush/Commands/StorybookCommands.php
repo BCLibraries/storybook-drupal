@@ -42,8 +42,9 @@ final class StorybookCommands extends DrushCommands {
    * Finds all the Twig stories, and generates the JSON files, if necessary.
    */
   #[CLI\Command(name: 'storybook:generate-all-stories', aliases: ['generate-all-stories'])]
+  #[CLI\Argument(name: 'destination_subdirectory', description: 'Generate files into this subdirectory.')]
   #[CLI\Option(name: 'force', description: 'Generate JSON files even for stories that have not changed.')]
-  public function generateAllStories($options = ['force' => FALSE]): void {
+  public function generateAllStories(string $destination_subdirectory = '', $options = ['force' => FALSE]): void {
     // Find all templates in the site and call generateStoriesForTemplate.
     $scan_dirs = ['modules', 'profiles', 'themes'];
     $template_files = array_reduce(
@@ -58,6 +59,7 @@ final class StorybookCommands extends DrushCommands {
       $template_files,
       fn (\SplFileInfo $template_file) => $this->generateStoriesForTemplate(
         $template_file->getPathname(),
+        $destination_subdirectory,
         $options,
       ),
     );
@@ -108,14 +110,23 @@ final class StorybookCommands extends DrushCommands {
    */
   #[CLI\Command(name: 'storybook:generate-stories', aliases: ['generate-stories'])]
   #[CLI\Argument(name: 'template_path', description: 'Path to the *.stories.twig template file. This path should be relative to the Drupal root.')]
+  #[CLI\Argument(name: 'destination_subdirectory', description: 'Generate files into this subdirectory.')]
   #[CLI\Option(name: 'force', description: 'Generate JSON files even for stories that have not changed.')]
-  public function generateStoriesForTemplate(string $template_path, $options = ['force' => FALSE]): void {
+  public function generateStoriesForTemplate(string $template_path, string $destination_subdirectory = '', $options = ['force' => FALSE]): void {
     $root = \Drupal::root();
     $url = Url::fromUri('internal:/storybook/stories/render', ['absolute' => TRUE])
       ->toString(TRUE)
       ->getGeneratedUrl();
     $template_file = new \SplFileInfo($root . DIRECTORY_SEPARATOR . $template_path);
     $destination_path = preg_replace('/\.stories\.twig/', '.stories.json', $template_path);
+    if (!empty($destination_subdirectory) ) {
+      $destination_info = pathinfo($destination_path);
+      $destination_directory =  $destination_info['dirname'] . DIRECTORY_SEPARATOR . $destination_subdirectory;
+      $destination_path = $destination_directory . DIRECTORY_SEPARATOR . $destination_info['basename'];
+      if (!is_dir($destination_directory)) {
+        mkdir($destination_directory);
+      } 
+    }
     $should_generate = TRUE;
     if (file_exists($root . DIRECTORY_SEPARATOR . $destination_path)) {
       $destination_file = new \SplFileInfo($root . DIRECTORY_SEPARATOR . $destination_path);
