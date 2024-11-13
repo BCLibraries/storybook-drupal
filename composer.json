@@ -6,7 +6,7 @@
         "ext-dom": "*",
         "symfony/dom-crawler": "^4 || ^6 || ^7",
         "symfony/css-selector": "^4 || ^6 || ^7",
-        "e0ipso/twig-storybook": "^1.4"
+        "e0ipso/twig-storybook": "^1.5"
     },
     "license": "GPL-2.0-or-later",
     "authors": [
