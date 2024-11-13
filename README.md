@@ -179,3 +179,159 @@ If you want to monitor story changes to compile Twig stories into JSON, execute 
 ```bash
 watch --color drush storybook:generate-all-stories
 ```
+
+### Tugboat setup and configuration
+[Tugboat](https://www.tugboatqa.com/) is a service that builds a complete, working website, for every pull request. You can also preview your Storybook application within Tugboat with a few additional configurations.
+
+Note: You will need a Tugboat account configured for your repository to preview your application.
+
+Update your `.tugboat/config.yml` file with the following service.
+
+```yaml
+storybook:
+    image: tugboatqa/node:20
+    checkout: true
+    expose: 6006
+    commands:
+      init:
+        - corepack enable
+        - corepack install
+        - yarn
+        - mkdir -p /etc/service/node
+        - echo "#!/bin/sh" > /etc/service/node/run
+        - echo "yarn --cwd ${TUGBOAT_ROOT} storybook" >> /etc/service/node/run
+        - chmod +x /etc/service/node/run
+      build:
+        - perl -pe "s/my-domain.com/$TUGBOAT_DEFAULT_SERVICE_URL_HOST/g" -i web/**/**/*json
+        - echo "STORYBOOK_DRUPAL_PREVIEW_URL=${TUGBOAT_SERVICE_URL}" >> ${TUGBOAT_ROOT}/.env
+        - yarn > /dev/null
+```
+
+You will also need to update the `init` command used for your PHP service to allow for a custom nginx configuration in order to add Cross Origing Resource Sharing (CORS) headers so that the Tugboat application can access your site's static assets such as CSS/JS, Webfonts, and icon SVGs.
+
+In `.tugboat/config.yml` add the following to your `init` command for your PHP service.
+
+```yaml
+php:
+    ...
+    commands:
+      init:
+        - ...
+        - apt-get install gettext
+        - envsubst '$TUGBOAT_SERVICE_URL_HOST $DOCROOT' < "${TUGBOAT_ROOT}/.tugboat/default.nginx.conf.template" > /etc/nginx/sites-enabled/default.nginx.conf
+```
+
+And create the following file `.tugboat/default.nginx.conf.template` with the following content:
+
+```nginx
+server {
+    listen 80;
+    server_name ${TUGBOAT_SERVICE_URL_HOST};
+    root ${DOCROOT};
+
+    index index.php index.htm index.html;
+
+    # Disable sendfile as per https://docs.vagrantup.com/v2/synced-folders/virtualbox.html
+    sendfile off;
+    error_log /dev/stdout info;
+    access_log /var/log/nginx/access.log;
+
+    location / {
+        absolute_redirect off;
+        try_files $uri $uri/ /index.php?$query_string; # For Drupal >= 7
+    }
+
+    location @rewrite {
+        # For D7 and above:
+        # Clean URLs are handled in drupal_environment_initialize().
+        rewrite ^ /index.php;
+    }
+
+    # Handle image styles for Drupal 7+
+    location ~ ^/sites/.*/files/styles/ {
+        try_files $uri @rewrite;
+    }
+
+    # pass the PHP scripts to FastCGI server listening on socket
+    location ~ '\.php$|^/update.php' {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+
+        # Normally we'd use a unix socket here, but the base image is already
+        # configured to listen on a TCP port. Since it's local anyways, we don't
+        # expect any real performance impact.
+        fastcgi_pass localhost:9000;
+
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_intercept_errors off;
+        # fastcgi_read_timeout should match max_execution_time in php.ini
+        fastcgi_read_timeout 10m;
+        fastcgi_param SERVER_NAME $host;
+        fastcgi_param HTTPS $fcgi_https;
+    }
+
+    # Expire rules for static content
+
+    # Prevent clients from accessing hidden files (starting with a dot)
+    # This is particularly important if you store .htpasswd files in the site hierarchy
+    # Access to `/.well-known/` is allowed.
+    # https://www.mnot.net/blog/2010/04/07/well-known
+    # https://tools.ietf.org/html/rfc5785
+    location ~* /\.(?!well-known\/) {
+        deny all;
+    }
+
+    # Prevent clients from accessing to backup/config/source files
+    location ~* (?:\.(?:bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op])|~)$ {
+        deny all;
+    }
+
+    ## Regular private file serving (i.e. handled by Drupal).
+    location ^~ /system/files/ {
+        ## For not signaling a 404 in the error log whenever the
+        ## system/files directory is accessed add the line below.
+        ## Note that the 404 is the intended behavior.
+        log_not_found off;
+        access_log off;
+        expires 30d;
+        try_files $uri @rewrite;
+    }
+
+    # Media: images, icons, video, audio, HTC
+    location ~* \.(jpg|jpeg|gif|png|ico|cur|gz|mp4|ogg|ogv|webm|webp|htc)$ {
+        try_files $uri @rewrite;
+        expires max;
+        log_not_found off;
+    }
+
+    # Media: SVG icons with CORS headers
+    location ~* \.(svg)$ {
+        # Allow storybook to access SVGs.
+        add_header Access-Control-Allow-Origin '*';
+        add_header X-Content-Type-Options nosniff;
+        try_files $uri @rewrite;
+        expires max;
+        log_not_found off;
+    }
+
+    # Assets: js, css and webfonts with CORS headers
+    location ~* \.(js|css|woff|woff2|ttf)$ {
+        # Allow storybook to access JS, CSS and webfonts.
+        add_header Access-Control-Allow-Origin '*';
+        add_header X-Content-Type-Options nosniff;
+        try_files $uri @rewrite;
+        expires -1;
+        log_not_found off;
+    }
+}
+
+```
+
+This nginx configuration will be copied over to your Tugboat `sites-enabled` directory and loaded with every nginx reload. The configuration takes precedent over Tugboat's default nginx configuration for each `TUGBOAT_SERVICE_URL_HOST` which corresponds to the URL created by Tugboat for your pull requests.
+
+Note: You may need to add, remove, or update location directives depending on your site's particular use cases.
