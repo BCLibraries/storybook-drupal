@@ -180,6 +180,39 @@ If you want to monitor story changes to compile Twig stories into JSON, execute 
 watch --color drush storybook:generate-all-stories
 ```
 
+#### Setting the server url for Stories
+In order for Storybook to fetch the rendered story from Drupal, it must know the url for the Storybook route. By default this url is added as a [story parameter](https://storybook.js.org/docs/writing-stories/parameters) during the compilation process and will be set based on the URI configured for drush. 
+
+To override the domain, use Drush's `--uri` option. 
+
+```bash
+drush storybook:generate-all-stories --uri=https://my-site.com
+```
+
+If you'd prefer to set the server URL in Storybook configuration, you can omit the server url parameter from the compiled stories.json files with the `--omit-server-url` option. This is useful when deploying a static version of your Storybook application to different environments. 
+
+```bash
+drush storybook:generate-all-stories --omit-server-url
+```
+
+You will then need to set the server url option in Storybook's `.storybook/preview.[ts|js]` file. *NOTE: You must include the full path to Drupal's Storybook route when setting this configuration via Storybook configuration. Setting only the domain will not work*
+
+```js
+const preview = {
+  server: {
+    url: process.env.STORYBOOK_SERVER_URL || 'http://my-site.com/storybook/stories/render',
+  },
+  parameters: {
+    ...
+  },
+};
+
+export default preview;
+
+```
+
+In this example, we are setting the url to the `$STORYBOOK_SERVER_URL` environment variable if it's available, otherwise falling back to `http://my-site.com/storybook/stories/render`.
+
 ### Tugboat setup and configuration
 [Tugboat](https://www.tugboatqa.com/) is a service that builds a complete, working website, for every pull request. You can also preview your Storybook application within Tugboat with a few additional configurations.
 
