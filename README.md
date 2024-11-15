@@ -71,7 +71,7 @@ parameters:
     maxAge: false
     supportsCredentials: true
 services:
-  # ...
+# ...
 ```
 
 Disable render cache and twig cache:
@@ -140,10 +140,10 @@ As a workaround, you can take control of the `nginx-site.conf` file and tweak it
 ```yml
   # Media: images, icons, video, audio, HTC
   location ~* \.(png|jpg|jpeg|gif|ico|svg|woff|woff2)$ { # <--- Add the missing extensions
-    add_header Access-Control-Allow-Origin *; # <--- Add the CORS header
-    try_files $uri @rewrite;
-    expires max;
-    log_not_found off;
+  add_header Access-Control-Allow-Origin *; # <--- Add the CORS header
+  try_files $uri @rewrite;
+  expires max;
+  log_not_found off;
   }
 ```
 3. Run `ddev restart`
@@ -222,22 +222,22 @@ Update your `.tugboat/config.yml` file with the following service.
 
 ```yaml
 storybook:
-    image: tugboatqa/node:20
-    checkout: true
-    expose: 6006
-    commands:
-      init:
-        - corepack enable
-        - corepack install
-        - yarn
-        - mkdir -p /etc/service/node
-        - echo "#!/bin/sh" > /etc/service/node/run
-        - echo "yarn --cwd ${TUGBOAT_ROOT} storybook" >> /etc/service/node/run
-        - chmod +x /etc/service/node/run
-      build:
-        - perl -pe "s/my-domain.com/$TUGBOAT_DEFAULT_SERVICE_URL_HOST/g" -i web/**/**/*json
-        - echo "STORYBOOK_DRUPAL_PREVIEW_URL=${TUGBOAT_SERVICE_URL}" >> ${TUGBOAT_ROOT}/.env
-        - yarn > /dev/null
+  image: tugboatqa/node:20
+  checkout: true
+  expose: 6006
+  commands:
+    init:
+      - corepack enable
+      - corepack install
+      - yarn
+      - mkdir -p /etc/service/node
+      - echo "#!/bin/sh" > /etc/service/node/run
+      - echo "yarn --cwd ${TUGBOAT_ROOT} storybook" >> /etc/service/node/run
+      - chmod +x /etc/service/node/run
+    build:
+      - perl -pe "s/my-domain.com/$TUGBOAT_DEFAULT_SERVICE_URL_HOST/g" -i web/**/**/*json
+      - echo "STORYBOOK_DRUPAL_PREVIEW_URL=${TUGBOAT_SERVICE_URL}" >> ${TUGBOAT_ROOT}/.env
+      - yarn > /dev/null
 ```
 
 You will also need to update the `init` command used for your PHP service to allow for a custom nginx configuration in order to add Cross Origing Resource Sharing (CORS) headers so that the Tugboat application can access your site's static assets such as CSS/JS, Webfonts, and icon SVGs.
@@ -246,12 +246,12 @@ In `.tugboat/config.yml` add the following to your `init` command for your PHP s
 
 ```yaml
 php:
-    ...
-    commands:
-      init:
-        - ...
-        - apt-get install gettext
-        - envsubst '$TUGBOAT_SERVICE_URL_HOST $DOCROOT' < "${TUGBOAT_ROOT}/.tugboat/default.nginx.conf.template" > /etc/nginx/sites-enabled/default.nginx.conf
+  ...
+  commands:
+    init:
+      - ...
+      - apt-get install gettext
+      - envsubst '$TUGBOAT_SERVICE_URL_HOST $DOCROOT' < "${TUGBOAT_ROOT}/.tugboat/default.nginx.conf.template" > /etc/nginx/sites-enabled/default.nginx.conf
 ```
 
 And create the following file `.tugboat/default.nginx.conf.template` with the following content:
@@ -397,3 +397,51 @@ http://[DRUPAL-SITE]/storybook/stories/render/_cl_server?_storyFileName=.%2Fdocr
 ```
 
 Unlike with CL Server, the new Storybook module no longer requires `@lullabot/storybook-drupal-addon`. This add-on should be removed from the `.storybook/main.js`.
+
+### Case 3: Storybook converts arrays objects into string comma separated
+
+If you are passing an array of objects to a story and it is being converted into a string comma separated:
+
+```twig
+{% stories My_Stories with {
+  title: "Sample Stories",
+  argTypes: {}
+} %}
+    {% story Story1 with {
+        name: "Story 1",
+        args: {
+            items: [
+                "Hello",
+                "World!"
+            ],
+        },
+    } %}
+    {% include('resouce:my-component', { items }) %}
+    {% endstory %}
+{% endstories %}
+```
+
+In your components you will receive the `items` prop with the value: `Hello,World!` instead of an array.
+
+You can modify how storybook parse the objects in the url by adding a custom fetcher in your `.storybook/preview.js`:
+
+```js
+const fetchStoryHtml = (url, path, params/* , context */) => {
+  const serverUrl = new URL(`${url}/${path}`);
+  for (let key in params) {
+    if (typeof params[key] === 'object') {
+      serverUrl.searchParams.append(key, JSON.stringify(params[key]));
+    } else {
+      serverUrl.searchParams.append(key, params[key]);
+    }
+  }
+  return fetch(serverUrl).then((response) => response.text());
+};
+
+const preview = {
+    server: {
+      fetchStoryHtml,
+    },
+    // ...
+};
+```
