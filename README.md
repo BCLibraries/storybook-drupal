@@ -426,7 +426,13 @@ In your components you will receive the `items` prop with the value: `Hello,Worl
 You can modify how storybook parse the objects in the url by adding a custom fetcher in your `.storybook/preview.js`:
 
 ```js
-const fetchStoryHtml = (url, path, params/* , context */) => {
+const fetchStoryHtml = (url, path, baseParams, context) => {
+  const { globals = {}, initGlobals = {} } = context;
+  const params = {
+    ...baseParams,
+    ...globals,
+    ...initGlobals,
+  };
   const serverUrl = new URL(`${url}/${path}`);
   for (let key in params) {
     if (typeof params[key] === 'object') {
@@ -445,3 +451,5 @@ const preview = {
     // ...
 };
 ```
+
+> In Storybook 8.0+ you should include the server configuration inside the parameters object.
