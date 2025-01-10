@@ -441,3 +441,21 @@ Potential Solution:
     $ ddev drush en sdc_examples -y 
     ```
 - Delete the previously-generated *.my-story.stories.json (to avoid it being skipped) and generate it again.
+
+### Case 6: Including or embedding a template is not working
+- Are you using Single Directory Components (SDC)?
+- Or is your template within a theme or module?
+
+Potential Solution:
+- If using Single Directory Components, make sure you are following the SDC criteria at https://www.drupal.org/docs/develop/theming-drupal/using-single-directory-components/creating-a-single-directory-component
+  - You can then include (via function or tag):
+    ```
+    {{ include('sdc_examples:my-button' }} 
+    {% include('sdc_examples:my-button') %}
+    ```
+- Otherwise, make sure the Twig template is registered with Drupal. If using an existing theme or module, the namespace may already be registered. 
+  - See https://www.drupal.org/docs/contributed-modules/components/registering-twig-namespaces
+  - Then include via the appropriate namespace:
+    ```
+    {% include '@mytheme/path/to/mytemplate.twig' %}
+    ```
