@@ -427,11 +427,15 @@ You can modify how storybook parse the objects in the url by adding a custom fet
 
 ```js
 const fetchStoryHtml = (url, path, baseParams, context) => {
-  const { globals = {}, initGlobals = {} } = context;
+  const {
+      globals = {},     // Global parameters for storybook < 8 (Retro-compatibility)
+      initGlobals = {}, // Global parameters for storybook 8+
+  } = context;
   const params = {
     ...baseParams,
     ...globals,
     ...initGlobals,
+    _: Date.now(), // Prevent caching
   };
   const serverUrl = new URL(`${url}/${path}`);
   for (let key in params) {
@@ -443,7 +447,10 @@ const fetchStoryHtml = (url, path, baseParams, context) => {
   }
   return fetch(serverUrl).then((response) => response.text());
 };
+```
 
+> In Storybook **< 8.0** you should include the server configuration inside the parameters object.
+```js
 const preview = {
     server: {
       fetchStoryHtml,
@@ -451,5 +458,17 @@ const preview = {
     // ...
 };
 ```
+    
+> In Storybook **8.0+** you should include the server configuration inside the parameters object.
+```js
+const preview = {
+    parameters : {
+        server: {
+          fetchStoryHtml,
+        },
+        // ...
+    }
+    // ...
+};
+```
 
-> In Storybook 8.0+ you should include the server configuration inside the parameters object.
