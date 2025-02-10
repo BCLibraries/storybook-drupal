@@ -117,7 +117,7 @@ watch --color drush storybook:generate-all-stories
 1. Install the addon.
 
 ```shell
-ddev get tyler36/storybook
+ddev add-on get tyler36/ddev-storybook
 ddev restart
 ```
 
