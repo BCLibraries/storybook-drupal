@@ -46,7 +46,7 @@ class UnoptimizedAssetResolver implements AssetResolverInterface {
   /**
    * @inheritDoc
    */
-  public function getCssAssets(AttachedAssetsInterface $assets, $optimize, LanguageInterface $language = NULL) {
+  public function getCssAssets(AttachedAssetsInterface $assets, $optimize, ?LanguageInterface $language = NULL) {
     return $this->resolver->getCssAssets(
       $assets,
       $this->skipOptimization ? FALSE : $optimize,
@@ -57,7 +57,7 @@ class UnoptimizedAssetResolver implements AssetResolverInterface {
   /**
    * @inheritDoc
    */
-  public function getJsAssets(AttachedAssetsInterface $assets, $optimize, LanguageInterface $language = NULL) {
+  public function getJsAssets(AttachedAssetsInterface $assets, $optimize, ?LanguageInterface $language = NULL) {
     return $this->resolver->getJsAssets(
       $assets,
       $this->skipOptimization ? FALSE : $optimize,
