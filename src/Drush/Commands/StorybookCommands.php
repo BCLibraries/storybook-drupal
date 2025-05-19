@@ -72,7 +72,7 @@ final class StorybookCommands extends DrushCommands {
    * @return array
    *   Array of SplFileInfo objects for .stories.twig files.
    */
-  public function scanDirectory(string $directory): array {
+  private function scanDirectory(string $directory): array {
     // Skip if directory doesn't exist.
     if (!is_dir($directory)) {
       return [];
@@ -105,7 +105,7 @@ final class StorybookCommands extends DrushCommands {
    * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException
    *   If the path is invalid.
    */
-  public function validateTemplatePath(string $template_path): void {
+  private function validateTemplatePath($template_path): void {
     // Validate path.
     if (!str_ends_with($template_path, '.stories.twig')) {
       throw new UnprocessableEntityHttpException(sprintf(
