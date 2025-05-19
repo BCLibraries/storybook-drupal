@@ -22,23 +22,15 @@ class FileUrlGenerator implements FileUrlGeneratorInterface {
   private $fileGenerator;
 
   /**
-   * The request object.
-   *
-   * @var \Symfony\Component\HttpFoundation\Request
-   */
-  private $request;
-
-  /**
    * Constructs a file generator decorator.
    *
    * @param \Drupal\Core\File\FileUrlGeneratorInterface $fileGenerator
    *   The file generator we are decorating.
-   * @param \Drupal\Core\Http\RequestStack $request_stack
+   * @param \Drupal\Core\Http\RequestStack $requestStack
    *   The request stack.
    */
-  public function __construct(FileUrlGeneratorInterface $fileGenerator, RequestStack $request_stack) {
+  public function __construct(FileUrlGeneratorInterface $fileGenerator, private readonly RequestStack $requestStack) {
     $this->fileGenerator = $fileGenerator;
-    $this->request = $request_stack->getCurrentRequest();
   }
 
   /**
@@ -47,7 +39,7 @@ class FileUrlGenerator implements FileUrlGeneratorInterface {
   public function generateString(string $uri): string {
     // This is the only reason to decorate this service. We want all file URLs
     // to be absolute withing the Storybook iframe.
-    return Util::isRenderController($this->request)
+    return Util::isRenderController($this->requestStack->getCurrentRequest())
       ? $this->fileGenerator->generateAbsoluteString($uri)
       : $this->fileGenerator->generateString($uri);
   }

@@ -3,6 +3,7 @@
 namespace Drupal\storybook\EventSubscriber;
 
 use Drupal\storybook\Util;
+use Masterminds\HTML5;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -32,11 +33,8 @@ final class AlterBodySubscriber implements EventSubscriberInterface {
     if (empty($html)) {
       return;
     }
-    $dom = new \DOMDocument();
-    $success = @$dom->loadHTML($html);
-    if (!$success) {
-      return;
-    }
+    $html5 = new HTML5(['disable_html_ns' => TRUE, 'encoding' => 'UTF-8']);
+    $dom = $html5->loadHTML($html);
     $wrapper_contents = $dom->getElementById('___storybook_wrapper');
     if (is_null($wrapper_contents)) {
       return;

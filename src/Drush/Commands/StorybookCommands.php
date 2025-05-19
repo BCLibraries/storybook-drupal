@@ -43,7 +43,8 @@ final class StorybookCommands extends DrushCommands {
    */
   #[CLI\Command(name: 'storybook:generate-all-stories', aliases: ['generate-all-stories'])]
   #[CLI\Option(name: 'force', description: 'Generate JSON files even for stories that have not changed.')]
-  public function generateAllStories($options = ['force' => FALSE]): void {
+  #[CLI\Option(name: 'omit-server-url', description: 'Omits the server url parameter from the generated JSON files.')]
+  public function generateAllStories($options = ['force' => FALSE, 'omit-server-url' => FALSE]): void {
     // Find all templates in the site and call generateStoriesForTemplate.
     $scan_dirs = ['modules', 'profiles', 'themes'];
     $template_files = array_reduce(
@@ -128,11 +129,15 @@ final class StorybookCommands extends DrushCommands {
   #[CLI\Command(name: 'storybook:generate-stories', aliases: ['generate-stories'])]
   #[CLI\Argument(name: 'template_path', description: 'Path to the *.stories.twig template file. This path should be relative to the Drupal root.')]
   #[CLI\Option(name: 'force', description: 'Generate JSON files even for stories that have not changed.')]
-  public function generateStoriesForTemplate(string $template_path, $options = ['force' => FALSE]): void {
+  #[CLI\Option(name: 'omit-server-url', description: 'Omits the server url parameter from the generated JSON files.')]
+  public function generateStoriesForTemplate(string $template_path, $options = ['force' => FALSE, 'omit-server-url' => FALSE]): void {
     $root = \Drupal::root();
-    $url = Url::fromUri('internal:/storybook/stories/render', ['absolute' => TRUE])
-      ->toString(TRUE)
-      ->getGeneratedUrl();
+    $url = '';
+    if (!$options['omit-server-url']) {
+      $url = Url::fromUri('internal:/storybook/stories/render', ['absolute' => TRUE])
+        ->toString(TRUE)
+        ->getGeneratedUrl();
+    }
     $template_file = new \SplFileInfo($root . DIRECTORY_SEPARATOR . $template_path);
     $destination_path = preg_replace('/\.stories\.twig/', '.stories.json', $template_path);
     $should_generate = TRUE;
