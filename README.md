@@ -152,18 +152,21 @@ As a workaround, you can take control of the `nginx-site.conf` file and tweak it
 
 ### Storybook setup
 
-Install Storybook as usual:
+Installing storybook for this module can be done with the storybook creation tool, but requires a pre-existing package.json file. If you don't have one, you can create one with the following command:
 
 ```bash
-# Make use of modern versions of yarn.
-yarn set version berry
-# Avoid pnp.
-echo 'nodeLinker: node-modules' >> .yarnrc.yml
-# Install and configure stock Storybook.
-yarn dlx sb init --builder webpack5 --type server
+npm init -y
+```
+
+Then, install Storybook with the storybook creation tool:
+
+```bash
+npx storybook init --type server
 ```
 
 Then update `.storybook/main.js` to scan for stories where your application stores them.
+
+If running storybook within DDEV, be sure to update the storybook script to use the `--no-open` flag.
 
 ### Compiling Twig stories into JSON
 
@@ -197,12 +200,14 @@ drush storybook:generate-all-stories --omit-server-url
 
 You will then need to set the server url option in Storybook's `.storybook/preview.[ts|js]` file. *NOTE: You must include the full path to Drupal's Storybook route when setting this configuration via Storybook configuration. Setting only the domain will not work*
 
+The preview.[ts|js] file is loaded in the Canvas UI, the “preview” iframe that renders your components in isolation. This means that your file needs to work in the browser and `process.env` is not available.
+
 ```js
 const preview = {
-  server: {
-    url: process.env.STORYBOOK_SERVER_URL || 'http://my-site.com/storybook/stories/render',
-  },
   parameters: {
+    server: {
+      url: `https://my-site.com/storybook/stories/render`,
+    }
     ...
   },
 };
@@ -210,8 +215,6 @@ const preview = {
 export default preview;
 
 ```
-
-In this example, we are setting the url to the `$STORYBOOK_SERVER_URL` environment variable if it's available, otherwise falling back to `http://my-site.com/storybook/stories/render`.
 
 ### Tugboat setup and configuration
 [Tugboat](https://www.tugboatqa.com/) is a service that builds a complete, working website, for every pull request. You can also preview your Storybook application within Tugboat with a few additional configurations.
