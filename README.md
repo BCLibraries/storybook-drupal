@@ -400,3 +400,65 @@ http://[DRUPAL-SITE]/storybook/stories/render/_cl_server?_storyFileName=.%2Fdocr
 ```
 
 Unlike with CL Server, the new Storybook module no longer requires `@lullabot/storybook-drupal-addon`. This add-on should be removed from the `.storybook/main.js`.
+
+### Case 3: Bad gateway
+- Is Storybook server running with no errors?
+- If using `ddev` do you see a storybook URL when you run `ddev describe` (e.g., `storybook  https://mysite.localhost:6006`)
+
+Potential Solution:
+- Check `ddev yarn storybook --no-open` to make sure Storybook is running with no reported issues.
+  - Note: The `--no-open` option may no longer be needed if https://www.drupal.org/project/storybook/issues/3480867 is resolved.
+- Visit `ddev describe` for the correct storybook URL.
+
+### Case 4: CORS error: "NetworkError when attempting to fetch resource" or Load Failed"
+- When inspecting your browser's Console, do see "Cross-Origin Request Blocked"?
+- Do you have the right CORS settings in development.services.yml?
+
+Potential Solution:
+- Double-check that your development.services.yml is being properly loaded.
+- Optional: To confirm that it's a CORS-related issue, you could **temporarily** disable CORS, e.g., using Safari's Develop > Developer Settings > General > Security > "Disable cross-origin restrictions"
+  - If things work with CORS disabled, it's likely that your CORS settings in development.services.yml are not being loaded properly.
+  - **Important**: Make sure to uncheck the "Disable cross-origin restrictions" box after confirming, and remember to disable development mode in production!
+
+### Case 5: Blank story
+- Did you generate the story via one of the following commands? (Or via `watch`)
+    ```
+    $ ddev drush storybook:generate-stories path/to/my-story.stories.twig
+    $ ddev drush storybook:generate-all-stories
+    ```
+- Are you able to visit the rendered story directly?
+  - Get hash from "id" in generated my-story.stories.json
+  - `https://mysite.localhost/storybook/stories/render/[hash]`
+
+Potential Solution:
+- If you are able to visit the rendered story directly at `https://mysite.localhost/storybook/stories/render/[hash]` (with anonymous permissions set), but you cannot see it at https://mysite.localhost:6006` there may be a problem with your Twig template.
+  - Try removing any include/embed statements to see if simple HTML markup is working.
+  - Then try adding a known SDC component or registered theme template.
+  ```
+  {% include('sdc_examples:my-button') %}
+  {% include '@mytheme/path/to/mytemplate.twig' %}
+  ```
+- If using an example from sdc_examples, make sure you've installed and enabled the module.
+    ```
+    $ ddev composer require 'drupal/sdc_examples:1.x-dev@dev'
+    $ ddev drush en sdc_examples -y 
+    ```
+- Delete the previously-generated *.my-story.stories.json (to avoid it being skipped) and generate it again.
+
+### Case 6: Including or embedding a template is not working
+- Are you using Single Directory Components (SDC)?
+- Or is your template within a theme or module?
+
+Potential Solution:
+- If using Single Directory Components, make sure you are following the SDC criteria at https://www.drupal.org/docs/develop/theming-drupal/using-single-directory-components/creating-a-single-directory-component
+  - You can then include (via function or tag):
+    ```
+    {{ include('sdc_examples:my-button' }} 
+    {% include('sdc_examples:my-button') %}
+    ```
+- Otherwise, make sure the Twig template is registered with Drupal. If using an existing theme or module, the namespace may already be registered. 
+  - See https://www.drupal.org/docs/contributed-modules/components/registering-twig-namespaces
+  - Then include via the appropriate namespace:
+    ```
+    {% include '@mytheme/path/to/mytemplate.twig' %}
+    ```
