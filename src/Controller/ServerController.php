@@ -11,6 +11,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use TwigStorybook\Exception\StoryRenderException;
 use TwigStorybook\Service\StoryRenderer;
@@ -58,6 +59,13 @@ class ServerController extends ControllerBase {
   private StoryRenderer $storyRenderer;
 
   /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  private RequestStack $requestStack;
+
+  /**
    * Creates an object.
    *
    * @param \Drupal\Core\PageCache\ResponsePolicy\KillSwitch $cache_kill_switch
@@ -67,11 +75,12 @@ class ServerController extends ControllerBase {
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   The time service.
    */
-  public function __construct(KillSwitch $cache_kill_switch, StateInterface $state, TimeInterface $time, StoryRenderer $story_renderer, bool $development_mode) {
+  public function __construct(KillSwitch $cache_kill_switch, StateInterface $state, TimeInterface $time, StoryRenderer $story_renderer, RequestStack $requestStack, bool $development_mode) {
     $this->cacheKillSwitch = $cache_kill_switch;
     $this->state = $state;
     $this->time = $time;
     $this->storyRenderer = $story_renderer;
+    $this->requestStack = $requestStack;
     $this->developmentMode = $development_mode;
   }
 
@@ -87,8 +96,10 @@ class ServerController extends ControllerBase {
     assert($time instanceof TimeInterface);
     $story_renderer = $container->get(StoryRenderer::class);
     assert($story_renderer instanceof StoryRenderer);
+    $request_stack = $container->get(RequestStack::class);
+    assert($request_stack instanceof RequestStack);
     $development_mode = (bool) $container->getParameter('storybook.development');
-    return new static($cache_kill_switch, $state, $time, $story_renderer, $development_mode);
+    return new static($cache_kill_switch, $state, $time, $story_renderer, $request_stack, $development_mode);
   }
 
 
@@ -99,6 +110,14 @@ class ServerController extends ControllerBase {
     catch (StoryRenderException $e) {
       throw new HttpException(500, $e->getMessage(), previous: $e);
     }
+
+    // Ensure image URLs include the domain so storybook hosted on any platform
+    // can still access images.
+    // This looks for src and srcset where the value starts with a '/' followed
+    // by a non-slash.
+    $base_url = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
+    $markup = preg_replace('/(src|srcset)=("|\')\/([^\/])/i', '$1=$2' . $base_url . '/$3', $markup);
+
     return [
       '#attached' => ['library' => ['storybook/attach_behaviors']],
       '#type' => 'container',
