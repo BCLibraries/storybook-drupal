@@ -400,3 +400,78 @@ http://[DRUPAL-SITE]/storybook/stories/render/_cl_server?_storyFileName=.%2Fdocr
 ```
 
 Unlike with CL Server, the new Storybook module no longer requires `@lullabot/storybook-drupal-addon`. This add-on should be removed from the `.storybook/main.js`.
+
+### Case 3: Storybook converts arrays objects into string comma separated
+
+If you are passing an array of objects to a story and it is being converted into a string comma separated:
+
+```twig
+{% stories My_Stories with {
+  title: "Sample Stories",
+  argTypes: {}
+} %}
+    {% story Story1 with {
+        name: "Story 1",
+        args: {
+            items: [
+                "Hello",
+                "World!"
+            ],
+        },
+    } %}
+    {% include('resouce:my-component', { items }) %}
+    {% endstory %}
+{% endstories %}
+```
+
+In your components you will receive the `items` prop with the value: `Hello,World!` instead of an array.
+
+You can modify how storybook parse the objects in the url by adding a custom fetcher in your `.storybook/preview.js`:
+
+```js
+const fetchStoryHtml = (url, path, baseParams, context) => {
+  const {
+      globals = {},     // Global parameters for storybook < 8 (Retro-compatibility)
+      initGlobals = {}, // Global parameters for storybook 8+
+  } = context;
+  const params = {
+    ...baseParams,
+    ...globals,
+    ...initGlobals,
+    _: Date.now(), // Prevent caching
+  };
+  const serverUrl = new URL(`${url}/${path}`);
+  for (let key in params) {
+    if (typeof params[key] === 'object') {
+      serverUrl.searchParams.append(key, JSON.stringify(params[key]));
+    } else {
+      serverUrl.searchParams.append(key, params[key]);
+    }
+  }
+  return fetch(serverUrl).then((response) => response.text());
+};
+```
+
+> In Storybook **< 8.0** you should include the server configuration inside the parameters object.
+```js
+const preview = {
+    server: {
+      fetchStoryHtml,
+    },
+    // ...
+};
+```
+    
+> In Storybook **8.0+** you should include the server configuration inside the parameters object.
+```js
+const preview = {
+    parameters : {
+        server: {
+          fetchStoryHtml,
+        },
+        // ...
+    }
+    // ...
+};
+```
+
