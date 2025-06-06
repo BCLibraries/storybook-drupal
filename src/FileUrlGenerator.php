@@ -26,8 +26,8 @@ class FileUrlGenerator implements FileUrlGeneratorInterface {
    *
    * @param \Drupal\Core\File\FileUrlGeneratorInterface $fileGenerator
    *   The file generator we are decorating.
-   * @param \Drupal\Core\Http\RequestStack $requestStack
-   *   The request stack.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
+   *   Symfony Request stack.
    */
   public function __construct(FileUrlGeneratorInterface $fileGenerator, private readonly RequestStack $requestStack) {
     $this->fileGenerator = $fileGenerator;
