@@ -2,6 +2,8 @@
 
 namespace Drupal\storybook\Drush\Commands;
 
+use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Render\RenderContext;
 use Drupal\Core\Url;
 use Drupal\storybook\Drush\RegexRecursiveFilterIterator;
 use Drush\Attributes as CLI;
@@ -24,7 +26,8 @@ final class StorybookCommands extends DrushCommands {
    * Constructs a StorybookCommands object.
    */
   public function __construct(
-    private readonly StoryRenderer $storyRenderer
+    private readonly StoryRenderer $storyRenderer,
+    private readonly RendererInterface $renderer
   ) {
     parent::__construct();
   }
@@ -35,6 +38,7 @@ final class StorybookCommands extends DrushCommands {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get(StoryRenderer::class),
+      $container->get('renderer'),
     );
   }
 
@@ -131,8 +135,9 @@ final class StorybookCommands extends DrushCommands {
       $this->logger()->success(dt('Skipping JSON file generation for %path.', ['%path' => $destination_path]));
       return;
     }
-    $data = $this->storyRenderer
-      ->generateStoriesJsonFile($template_path, $url);
+    $data = $this->renderer->executeInRenderContext(new RenderContext(), function () use ($template_path, $url) {
+      return $this->storyRenderer->generateStoriesJsonFile($template_path, $url);
+    });
     if ($template_path === $destination_path) {
       throw new CommandFailedException('Cannot overwrite the current template path.');
     }
