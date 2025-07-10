@@ -76,18 +76,28 @@ final class StorybookCommands extends DrushCommands {
       | \FilesystemIterator::CURRENT_AS_FILEINFO
       | \FilesystemIterator::SKIP_DOTS;
     $directory_iterator = new \RecursiveDirectoryIterator($directory, $flags);
+
+    // Filter out directories with sibling package.json files.
+    $callback_filter = new \RecursiveCallbackFilterIterator(
+      $directory_iterator,
+      function ($current, $key, $iterator) {
+        // Skip directory if it contains a sibling package.json.
+        if ($current->isDir()) {
+          $current_path = $current->getPathname();
+          $package_json_path = $current_path . DIRECTORY_SEPARATOR . 'package.json';
+          if (file_exists($package_json_path) && str_contains($current_path, 'node_modules')) {
+            return false;
+          }
+        }
+        return true;
+      }
+    );
     // Detect "my_component.component.yml".
     $regex = '/^([a-z0-9_-])+\.stories\.twig$/i';
-    $filter = new RegexRecursiveFilterIterator($directory_iterator, $regex);
+    $filter = new RegexRecursiveFilterIterator($callback_filter, $regex);
     $it = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::LEAVES_ONLY, $flags);
     $files = [];
     foreach ($it as $file) {
-      
-      // Exclude node_modules directories.
-      if (str_contains($file->getPathname(), 'node_modules')) {
-        continue;
-      }
-      
       $this->validateTemplatePath($file);
       $files[] = $file;
     }
