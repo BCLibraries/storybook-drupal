@@ -50,6 +50,41 @@ This will render as:
 
 ![Storybook Screenshot](./docs/sb-screenshot.png)
 
+#### Multiple stories in a single stories file
+
+Make sure to pass an alternative ID for each story:
+
+```twig
+{# some/path/in/your/code/base/my-card.stories.twig #}
+{% stories my_card with { title: 'Components/Examples/Card' } %}
+
+  {% story default with {
+    name: '1. Default',
+    args: { header: 'I am a header!', text: 'Learn more', iconType: 'power' }
+  } %}
+    {% embed '@examples/my-card' with { header } %}
+      {% block card_body %}
+        <p>I am the <em>card</em> contents.</p>
+        {% include '@examples/my-button' with { text, iconType } %}
+      {% endblock %}
+    {% endembed %}
+  {% endstory %}
+
+  {# note alternative ID "alternative" instead of "default" 👇 #}
+  {% story alternative with {
+    name: '2. Alternative',
+    args: { header: 'Alternative header!', text: 'Read more', iconType: 'book' }
+  } %}
+    {% embed '@examples/my-card' with { header } %}
+      {% block card_body %}
+        <p>I am the <strong>card</strong> contents.</p>
+      {% endblock %}
+    {% endembed %}
+  {% endstory %}
+
+{% endstories %}
+```
+
 ### Drupal setup
 In `development.services.yml` you want to add some configuration for Twig, so you don't need to clear caches so often. This is not needed for the Storybook integration, but it will make things easier when you need to move components to your Drupal templates.
 
