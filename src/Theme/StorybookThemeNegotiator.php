@@ -42,7 +42,7 @@ class StorybookThemeNegotiator implements ThemeNegotiatorInterface {
       return FALSE;
     }
     $theme = $this->getTheme();
-    return ($route_name === 'storybook.render' && !empty($theme));
+    return ($route_name === 'storybook.render_story' && !empty($theme));
   }
 
   /**
