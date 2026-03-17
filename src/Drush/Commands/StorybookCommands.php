@@ -64,8 +64,16 @@ final class StorybookCommands extends DrushCommands {
     );
   }
 
+  /**
+   * Scans a directory for .stories.twig files.
+   *
+   * @param string $directory
+   *   The directory to scan.
+   *
+   * @return array
+   *   Array of SplFileInfo objects for .stories.twig files.
+   */
   private function scanDirectory(string $directory): array {
-
     // Skip if directory doesn't exist.
     if (!is_dir($directory)) {
       return [];
@@ -74,7 +82,8 @@ final class StorybookCommands extends DrushCommands {
     // Use FilesystemIterator to not iterate over the . and .. directories.
     $flags = \FilesystemIterator::KEY_AS_PATHNAME
       | \FilesystemIterator::CURRENT_AS_FILEINFO
-      | \FilesystemIterator::SKIP_DOTS;
+      | \FilesystemIterator::SKIP_DOTS
+      | \FilesystemIterator::FOLLOW_SYMLINKS;
     $directory_iterator = new \RecursiveDirectoryIterator($directory, $flags);
     // Detect "my_component.component.yml".
     $regex = '/^([a-z0-9_-])+\.stories\.twig$/i';
@@ -82,13 +91,22 @@ final class StorybookCommands extends DrushCommands {
     $it = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::LEAVES_ONLY, $flags);
     $files = [];
     foreach ($it as $file) {
-      $this->validateTemplatePath($file);
+      $this->validateTemplatePath($file->getPathname());
       $files[] = $file;
     }
     return $files;
   }
 
-  private function validateTemplatePath(string $template_path): void {
+  /**
+   * Validates a template path.
+   *
+   * @param string $template_path
+   *   The template path to validate.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException
+   *   If the path is invalid.
+   */
+  private function validateTemplatePath($template_path): void {
     // Validate path.
     if (!str_ends_with($template_path, '.stories.twig')) {
       throw new UnprocessableEntityHttpException(sprintf(
@@ -96,7 +114,8 @@ final class StorybookCommands extends DrushCommands {
         $template_path
       ));
     }
-    if (!str_starts_with(realpath($template_path), \Drupal::root())) {
+    $absolute_path = (new \SplFileInfo(\Drupal::root() . DIRECTORY_SEPARATOR . $template_path))->getPathname();
+    if (!str_starts_with($absolute_path, \Drupal::root())) {
       throw new UnprocessableEntityHttpException(sprintf(
         'Invalid template name for the stories "%s". Paths outside the Drupal application are not allowed.',
         $template_path
