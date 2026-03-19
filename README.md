@@ -45,6 +45,10 @@ Here's an example:
 
 {% endstories %}
 ```
+#### Re-using Story
+```
+{{ include_story('my-theme-or-module:my-component', 'myvariant', {myprop: "override"}) }}
+```
 
 This will render as:
 
