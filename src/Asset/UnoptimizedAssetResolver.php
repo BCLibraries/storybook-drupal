@@ -65,4 +65,16 @@ class UnoptimizedAssetResolver implements AssetResolverInterface {
     );
   }
 
+  /**
+   * ADDED BY BCLIBRARIES FOR DRUPAL 11.4.0 COMPATIBILITY
+   *
+   * @param \Drupal\Core\Asset\AttachedAssetsInterface $assets
+   * @param \Drupal\Core\Language\LanguageInterface|null $language
+   *
+   * @return array
+   */
+  public function getFontAssets(AttachedAssetsInterface $assets, ?LanguageInterface $language = NULL): array {
+    return $this->resolver->getFontAssets($assets, $language);
+  }
+
 }
